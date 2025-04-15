@@ -3,44 +3,68 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use Slim\Exception\HttpNotFoundException;
+use MariaLembeck\Tarefas\Service\TarefasService;
 
 require __DIR__ . '/vendor/autoload.php';
 
 $app = AppFactory::create();
+//  middleware é um evento que ocorre antes da requisição chegar na rota
+$errorMiddleware = $app->addErrorMiddleware(true, true, true);
+$errorMiddleware->setErrorHandler(HttpNotFoundException::class, function (
+    Request $request,
+    Throwable $exception,
+    bool $displayErrorDetails,
+    bool $logErrors,
+    bool $logErrorDatails
+) use ($app) {
+    $response = $app->getResponseFactory()->createResponse();
+    $response->getBody()->write('{"error": "Recurso não foi encontrado"}');
+    return $response->withHeader('Content-Type', 'application/json')
+                    ->withStatus(404);
+});
+ 
 
-$app->get('/usuarios', function (Request $request, Response $response, array $args) {
-    $usuarios = [
-        ["id"=>1, "login"=> "elisa.fonseca", "nome"=> "Elisa Fonseca"],
-        ["id"=>2, "login"=> "isabella.daberkow", "nome"=> "Isabella Daberkow"],
-        ["id"=>3, "login"=> "karina.meier", "nome"=> "Karina Meier"],
-        ["id"=>4, "login"=> "amabile.luz", "nome"=> "Amábile Luz"],
-        ["id"=>5, "login"=> "maria.lembeck", "nome"=> "Maria Lembeck"],
-    ];
-    $response->getBody()->write(json_encode($usuarios));
+$app->get('/tarefas', function (Request $request, Response $response, array $args) {
+    $tarefa_service = new TarefasService();
+    $tarefas =  $tarefa_service->getAllTarefas();
+    $response->getBody()->write(json_encode($tarefas));
     return $response->withHeader('Content-Type', 'application/json');
 });
  
-$app->post('/usuarios', function(Request $request, Response $response, array $args){
+$app->post('/tarefas', function(Request $request, Response $response, array $args){
     $parametros = (array) $request->getParsedBody();
-    if (!array_key_exists('login', $parametros) || empty($parametros['login'])){
-        $response->getBody()->write(json_encode([
-            "mensagem" => "Login é obrigaório"
-        ]));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    if(!array_key_exists('titulo', $parametros) || empty($parametros['titulo'])){
+    $response->getBody()->write(json_encode([
+        "mensagem" => "titulo é obrigatório"
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-    if (!array_key_exists('senha', $parametros) || empty($parametros['senha'])){
-        $response->getBody()->write(json_encode([
-            "mensagem" => "Senha é obrigaório"
-        ]));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-    }
-    return $response->withStatus(201);
+    $tarefa = array_merge(['titulo' => '', 'concluido' => false], $parametros);
+    $tarefa_service = new TarefaService();
+    $tarefa_service->createTarefa($tarefa);
+    $tarefa_service->withStatus(201);
 });
-$app->delete('/usuarios/{id}', function(Request $requets, Response $response, array $args) {
-    return $response->withStatus(201);
+
+$app->delete('/tarefas/{id}', function(Request $requets, Response $response, array $args) {
+    $id = $args['id'];
+    $tarefa_service = new TarefasService();
+    $tarefa_services->deleteTarefa($id);
+    return $response->withStatus(204);
 });
-$app->put('/usuarios/{id}', function(Request $requets, Response $response, array $args) {
-    return $response->withStatus(201);
+
+$app->put('/tarefas/{id}', function(Request $requets, Response $response, array $args) {
+  $id = $args['id'];
+  $dados_para_atualizar = json_decode($request->getBody()->getContents(), true);
+  if (array_key_exists('titutlo', $dados_para_atualizar) && empty($dados_para_atualizar['titulo'])){
+    $response->getBody()->write(json_encode([
+        "mensagem" => "título é obrigatório"
+    ]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+  }
+  $tarefa_service = new TarefaService();
+  $tarefa_service->updateTarefa($id,$dados_para_atualizar);
+  return $response->withStatus(201);
+
 });
  
 
