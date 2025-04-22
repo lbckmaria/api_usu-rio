@@ -3,7 +3,8 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
 use Slim\Exception\HttpNotFoundException;
-use MariaLembeck\Tarefas\Service\TarefasService;
+use MariaLembeck\Service\TarefasService;
+use MariaLembeck\Math\Basic;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -22,14 +23,58 @@ $errorMiddleware->setErrorHandler(HttpNotFoundException::class, function (
     return $response->withHeader('Content-Type', 'application/json')
                     ->withStatus(404);
 });
- 
 
-$app->get('/tarefas', function (Request $request, Response $response, array $args) {
+$app->get("/math/soma/{num1}/{num2}", function(Request $request, Response $response, array $args){
+    $basic = new Basic();
+    $resultado = $basic->soma($args['num1'], $args['num2']);
+    $response->getBody()->write((string)$resultado);
+    return $response;
+});
+
+$app->get("/math/subtrai/{num1}/{num2}", function(Request $request, Response $response, array $args){
+    $basic = new Basic();
+    $resultado = $basic->subtrai($args['num1'], $args['num2']);
+    $response->getBody()->write((string)$resultado);
+    return $response;
+});
+
+$app->get("/math/multiplica/{num1}/{num2}", function(Request $request, Response $response, array $args){
+    $basic = new Basic();
+    $resultado = $basic->multiplica($args['num1'], $args['num2']);
+    $response->getBody()->write((string)$resultado);
+    return $response;
+});
+
+$app->get("/math/divide/{num1}/{num2}", function(Request $request, Response $response, array $args){
+    $basic = new Basic();
+    $resultado = $basic->divide($args['num1'], $args['num2']);
+    $response->getBody()->write((string)$resultado);
+    return $response;
+});
+
+$app->get("/math/eleva/{num1}/{num2}", function(Request $request, Response $response, array $args){
+    $basic = new Basic();
+    $resultado = $basic->eleva($args['num1'], $args['num2']);
+    $response->getBody()->write((string)$resultado);
+    return $response;
+});
+
+
+$app->get("/math/raiz/{num1}/{num2}", function(Request $request, Response $response, array $args){
+    $basic = new Basic();
+    $resultado = $basic->raiz($args['num1'], $args['num2']);
+    $response->getBody()->write((string)$resultado);
+    return $response;
+});
+
+ $app->get('/tarefas', function (Request $request, Response $response, array $args) {
     $tarefa_service = new TarefasService();
     $tarefas =  $tarefa_service->getAllTarefas();
     $response->getBody()->write(json_encode($tarefas));
     return $response->withHeader('Content-Type', 'application/json');
-});
+}); 
+
+
  
 $app->post('/tarefas', function(Request $request, Response $response, array $args){
     $parametros = (array) $request->getParsedBody();
@@ -66,6 +111,6 @@ $app->put('/tarefas/{id}', function(Request $requets, Response $response, array 
   return $response->withStatus(201);
 
 });
- 
+
 
 $app->run();

@@ -1,6 +1,6 @@
 <?php
 
-namespace MariaLembeck\Tarefas\Service;
+namespace MariaLembeck\Service;
 
 
 class TarefasService
